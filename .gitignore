@@ -1,3 +1,118 @@
-.qoder\
-.FramePrototype\
-.Prompt\
+# ── Project-specific exclusions ────────────────────────────────────
+# IDE / editor configuration (Qoder workspace settings)
+.qoder/
+
+# Build / distribution artifacts
+.dist/
+
+# Frame Prototype — large asset folder (300 PNG frames, ~hundreds of MB)
+Frame Prototype/
+
+# Prompt documents (private project briefs)
+Prompt/
+
+# ── Python ─────────────────────────────────────────────────────────
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / optimised / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# C extensions
+*.so
+
+# pip / setuptools
+pip-log.txt
+pip-delete-this-directory.txt
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# ── OS ─────────────────────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ── IDE / Editor ───────────────────────────────────────────────────
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+tags
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ── Logs & runtime ────────────────────────────────────────────────
+*.log
+*.log.*
+logs/
+
+# ── Secrets & credentials ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# ── Temporary files ───────────────────────────────────────────────
+*.tmp
+*.bak
+*.swp
+*.temp
+temp/
+tmp/
