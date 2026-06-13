@@ -50,7 +50,9 @@ class SketchPortraitEffect(BaseEffect):
                 edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
             )
             # Draw longest contours first (visually most important).
-            contours = sorted(contours, key=cv2.arcLength, reverse=True)
+            contours = sorted(
+                contours, key=lambda c: cv2.arcLength(c, closed=False), reverse=True
+            )
             self._contour_cache[region.id] = contours
 
         contours = self._contour_cache[region.id]
@@ -63,7 +65,7 @@ class SketchPortraitEffect(BaseEffect):
             return canvas
 
         # Total arc-length across all contours.
-        total_length = sum(cv2.arcLength(c) for c in contours)
+        total_length = sum(cv2.arcLength(c, closed=False) for c in contours)
         if total_length == 0:
             return canvas
 
@@ -75,7 +77,7 @@ class SketchPortraitEffect(BaseEffect):
 
         drawn_length = 0.0
         for contour in contours:
-            arc = cv2.arcLength(contour)
+            arc = cv2.arcLength(contour, closed=False)
             if drawn_length + arc > target_length:
                 # Partial contour — draw only the portion that fits.
                 remaining = target_length - drawn_length
