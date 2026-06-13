@@ -1,0 +1,14 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: Q0DeR-MaG1C-BrAnCh-Fo2-NoN-GiT-Or-No-C0MmIt
+exported_at: "2026-06-13T10:27:33Z"
+modules:
+    gesture_visual:
+        dir_name: Gesture Visual Art
+        title: Gesture Visual Art
+        scope: []
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

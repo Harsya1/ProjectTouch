@@ -1,0 +1,10 @@
+- All effect classes inherit from `BaseEffect` and implement `render(frame: np.ndarray, region: Region) -> np.ndarray`.
+- Region data uses `@dataclass` with typed fields; `effect_type` is a string enum: "sketch" | "glitch" | "mosaic" | "pointcloud".
+- Pinch detection uses euclidean distance between MediaPipe landmarks 4 (thumb tip) and 8 (index tip), scaled from normalized to pixel coordinates.
+- Animation progress is a float 0.0→1.0 incremented by `dt / ANIMATION_DURATION_SEC` each frame.
+- Each effect uses a consistent random seed per region (derived from `region.id`) to ensure visual stability across frames while allowing slow time-based evolution.
+- The compositor draws a thin white border (`cv2.rectangle`, thickness=2, color=(255,255,255)) around every active region.
+- Frame is always mirrored horizontally (`cv2.flip(frame, 1)`) for natural webcam interaction.
+- Region eviction is FIFO: oldest region is removed when count exceeds `MAX_REGIONS`.
+- All color operations use BGR color space (OpenCV default) unless explicitly converting.
+- Performance-critical pixel operations should prefer NumPy vectorized operations over Python loops.
