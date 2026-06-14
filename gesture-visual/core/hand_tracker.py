@@ -1,7 +1,7 @@
 """
 core/hand_tracker.py
 ====================
-Wrapper around MediaPipe Hands that provides:
+Wrapper around the MediaPipe **Tasks API** (HandLandmarker) that provides:
   • process(frame)        → list of per-hand landmark sets
   • is_pinching()         → bool  (with built-in cooldown / debounce)
   • get_pinch_midpoint()  → (x, y) anchor for new region spawn
@@ -9,11 +9,15 @@ Wrapper around MediaPipe Hands that provides:
 
 Pinch is defined as the euclidean distance between landmark 4 (thumb tip)
 and landmark 8 (index finger tip) falling below PINCH_THRESHOLD_PX.
+
+NOTE: The legacy ``mp.solutions`` API was removed in mediapipe 0.10.30.
+      This module uses the replacement Tasks API (HandLandmarker).
 """
 
 from __future__ import annotations
 
 import math
+import os
 import time
 from typing import List, Tuple
 
@@ -24,10 +28,25 @@ from loguru import logger
 
 import config
 
+# MediaPipe Tasks API imports
+from mediapipe.tasks.python import BaseOptions
+from mediapipe.tasks.python.vision import (
+    HandLandmarker,
+    HandLandmarkerOptions,
+    RunningMode,
+)
 
 # MediaPipe landmark indices
 _THUMB_TIP = 4
 _INDEX_TIP = 8
+
+# Path to the downloaded hand_landmarker.task model file.
+# Resolved relative to the project root (gesture-visual/).
+_MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "models",
+    "hand_landmarker.task",
+)
 
 
 class HandTracker:
@@ -39,14 +58,29 @@ class HandTracker:
         min_detection_confidence: float = 0.7,
         min_tracking_confidence: float = 0.5,
     ) -> None:
-        self._hands = mp.solutions.hands.Hands(
-            static_image_mode=False,
-            max_num_hands=max_num_hands,
-            min_detection_confidence=min_detection_confidence,
+        if not os.path.isfile(_MODEL_PATH):
+            raise FileNotFoundError(
+                f"Hand landmarker model not found at: {_MODEL_PATH}\n"
+                "Download it from:\n"
+                "  https://storage.googleapis.com/mediapipe-models/"
+                "hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task\n"
+                "and place it in gesture-visual/models/"
+            )
+
+        options = HandLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=_MODEL_PATH),
+            running_mode=RunningMode.VIDEO,
+            num_hands=max_num_hands,
+            min_hand_detection_confidence=min_detection_confidence,
+            min_hand_presence_confidence=min_tracking_confidence,
             min_tracking_confidence=min_tracking_confidence,
         )
+        self._landmarker = HandLandmarker.create_from_options(options)
+        self._frame_timestamp_ms: int = 0
+
         # Timestamp of the last accepted pinch event (for cooldown).
         self._last_pinch_time: float = 0.0
+        logger.info(f"HandTracker initialised  model={_MODEL_PATH}")
 
     # ── Public API ─────────────────────────────────────────────────
 
@@ -59,17 +93,24 @@ class HandTracker:
         coordinates.
         """
         h, w = frame.shape[:2]
-        # MediaPipe expects RGB input.
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self._hands.process(rgb)
 
-        if not results.multi_hand_landmarks:
+        # Convert BGR → RGB and wrap in a MediaPipe Image.
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+
+        # Monotonically increasing timestamp required by VIDEO mode.
+        self._frame_timestamp_ms += 33  # ~30 ms per frame
+        result = self._landmarker.detect_for_video(
+            mp_image, self._frame_timestamp_ms
+        )
+
+        if not result.hand_landmarks:
             return []
 
         landmarks_list: List[List[Tuple[float, float, float]]] = []
-        for hand_lm in results.multi_hand_landmarks:
+        for hand_lm in result.hand_landmarks:
             scaled: List[Tuple[float, float, float]] = []
-            for lm in hand_lm.landmark:
+            for lm in hand_lm:
                 # Normalised coords (0-1) → pixel coords.
                 scaled.append((lm.x * w, lm.y * h, lm.z))
             landmarks_list.append(scaled)
@@ -138,4 +179,4 @@ class HandTracker:
 
     def release(self) -> None:
         """Release the underlying MediaPipe resources."""
-        self._hands.close()
+        self._landmarker.close()

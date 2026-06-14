@@ -11,6 +11,9 @@ Frame Prototype/
 # Prompt documents (private project briefs)
 Prompt/
 
+# MediaPipe model files (large binary, downloaded separately)
+gesture-visual/models/*.task
+
 # ── Python ─────────────────────────────────────────────────────────
 # Virtual environments
 venv/
